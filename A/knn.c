@@ -13,7 +13,9 @@ char knn(int n_groups, Group * groups, int k, Point to_evaluate) {
     //Paraleliza o loop que percorre todos os grupos e mede as distâncias
     #pragma omp parallel for private(i, j, x, y) shared(labels, distances)
     for (i = 0; i < n_groups; i++) {
+        // Obtém o grupo atual
         Group g = groups[i];
+        // Percorre todos os pontos do grupo
         for (j = 0; j < g.length; j++) {
             float d = euclidean_distance_no_sqrt(to_evaluate, g.points[j]);
             // utilizado o omp critical para evitar condição de corrida, uma vez que as variaveis diastances e labels são compartilhadas
@@ -26,6 +28,7 @@ char knn(int n_groups, Group * groups, int k, Point to_evaluate) {
                         distances[y] = distances[y - 1];
                         labels[y] = labels[y - 1];
                     }
+                    // Insere a nova distância e rótulo
                     distances[x] = d;
                     labels[x] = g.label;
                     break;
@@ -38,6 +41,7 @@ char knn(int n_groups, Group * groups, int k, Point to_evaluate) {
     
     qsort(labels, k, sizeof(char), compare_for_sort);
 
+    // Determina o rótulo mais frequente entre os K vizinhos mais próximos
     char most_frequent = labels[0];
     int most_frequent_count = 1;
     int current_frequency = 1;
@@ -60,7 +64,7 @@ char knn(int n_groups, Group * groups, int k, Point to_evaluate) {
         }
     }
 
-
+    // Retorna o rótulo mais frequente
     return most_frequent;
 }
 
@@ -69,8 +73,6 @@ int main() {
     
     Group * groups = (Group *) malloc(sizeof(Group) * n_groups);
 
-    // Paraleliza a leitura e inicialização dos grupos
-    #pragma omp parallel for
     for (int i = 0; i < n_groups; i++) {
         groups[i] = parse_next_group();
     }
